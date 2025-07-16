@@ -2,6 +2,8 @@
 #include <esp_err.h>
 #include <nvs.h>
 #include <nvs_flash.h>
+#include "esp_netif.h"
+
 #include <driver/gpio.h>
 #include <esp_event.h>
 
@@ -23,7 +25,6 @@ extern "C" void app_main(void)
         ret = nvs_flash_init();
     }
     ESP_ERROR_CHECK(ret);
-
     // Launch the application
     Application::GetInstance().Start();
 }

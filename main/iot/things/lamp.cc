@@ -15,7 +15,8 @@ private:
 #ifdef CONFIG_IDF_TARGET_ESP32
     gpio_num_t gpio_num_ = GPIO_NUM_12;
 #else
-    gpio_num_t gpio_num_ = GPIO_NUM_18;
+    //gpio_num_t gpio_num_ = GPIO_NUM_18;
+    gpio_num_t gpio_num_ = GPIO_NUM_2;
 #endif
     bool power_ = false;
 
@@ -32,22 +33,26 @@ private:
     }
 
 public:
-    Lamp() : Thing("Lamp", "A test lamp"), power_(false) {
+    Lamp() : Thing("Lamp", "一个测试用的灯"), power_(false) {
         InitializeGpio();
 
         // 定义设备的属性
-        properties_.AddBooleanProperty("power", "Whether the lamp is on", [this]() -> bool {
+        properties_.AddBooleanProperty("power", "灯是否打开", [this]() -> bool {
             return power_;
         });
 
         // 定义设备可以被远程执行的指令
-        methods_.AddMethod("turn_on", "Turn on the lamp", ParameterList(), [this](const ParameterList& parameters) {
+        methods_.AddMethod("TurnOn", "打开灯", ParameterList(), [this](const ParameterList& parameters) {
             power_ = true;
+            ESP_LOGW(TAG, "TurnOn: %d", power_);
+            // 这里可以添加打开灯的具体实现，例如通过 GPIO 控制灯的开关
             gpio_set_level(gpio_num_, 1);
         });
 
-        methods_.AddMethod("turn_off", "Turn off the lamp", ParameterList(), [this](const ParameterList& parameters) {
+        methods_.AddMethod("TurnOff", "关闭灯", ParameterList(), [this](const ParameterList& parameters) {
             power_ = false;
+            ESP_LOGW(TAG, "TurnOff: %d", power_);
+            // 这里可以添加打开灯的具体实现，例如通过 GPIO 控制灯的开关
             gpio_set_level(gpio_num_, 0);
         });
     }

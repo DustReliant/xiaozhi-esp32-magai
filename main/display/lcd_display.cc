@@ -146,6 +146,9 @@ SpiLcdDisplay::SpiLcdDisplay(esp_lcd_panel_io_handle_t panel_io, esp_lcd_panel_h
     }
 
     SetupUI();
+    
+    // 初始化页面管理器
+    page_manager_ = new PageManager(this, fonts_);
 }
 
 // RGB LCD实现
@@ -209,6 +212,9 @@ RgbLcdDisplay::RgbLcdDisplay(esp_lcd_panel_io_handle_t panel_io, esp_lcd_panel_h
     }
 
     SetupUI();
+    
+    // 初始化页面管理器
+    page_manager_ = new PageManager(this, fonts_);
 }
 
 MipiLcdDisplay::MipiLcdDisplay(esp_lcd_panel_io_handle_t panel_io, esp_lcd_panel_handle_t panel,
@@ -267,9 +273,18 @@ MipiLcdDisplay::MipiLcdDisplay(esp_lcd_panel_io_handle_t panel_io, esp_lcd_panel
     }
 
     SetupUI();
+    
+    // 初始化页面管理器
+    page_manager_ = new PageManager(this, fonts_);
 }
 
 LcdDisplay::~LcdDisplay() {
+    // 清理页面管理器
+    if (page_manager_ != nullptr) {
+        delete page_manager_;
+        page_manager_ = nullptr;
+    }
+    
     // 然后再清理 LVGL 对象
     if (content_ != nullptr) {
         lv_obj_del(content_);
@@ -311,6 +326,9 @@ void LcdDisplay::SetupUI() {
     lv_obj_set_style_text_font(screen, fonts_.text_font, 0);
     lv_obj_set_style_text_color(screen, current_theme_.text, 0);
     lv_obj_set_style_bg_color(screen, current_theme_.background, 0);
+    
+    // 页面管理器会处理具体的UI创建，这里只保留必要的初始化
+    return;
 
     /* Container */
     container_ = lv_obj_create(screen);
@@ -710,6 +728,9 @@ void LcdDisplay::SetupUI() {
     lv_obj_set_style_text_font(screen, fonts_.text_font, 0);
     lv_obj_set_style_text_color(screen, current_theme_.text, 0);
     lv_obj_set_style_bg_color(screen, current_theme_.background, 0);
+    
+    // 页面管理器会处理具体的UI创建，这里只保留必要的初始化
+    return;
 
     /* Container */
     container_ = lv_obj_create(screen);

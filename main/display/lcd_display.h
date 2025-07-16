@@ -2,12 +2,14 @@
 #define LCD_DISPLAY_H
 
 #include "display.h"
+#include "page_manager.h"
 
 #include <esp_lcd_panel_io.h>
 #include <esp_lcd_panel_ops.h>
 #include <font_emoji.h>
 
 #include <atomic>
+#include <memory>
 
 // Theme color structure
 struct ThemeColors {
@@ -37,6 +39,7 @@ protected:
 
     DisplayFonts fonts_;
     ThemeColors current_theme_;
+    PageManager* page_manager_ = nullptr;
 
     void SetupUI();
     virtual bool Lock(int timeout_ms = 0) override;

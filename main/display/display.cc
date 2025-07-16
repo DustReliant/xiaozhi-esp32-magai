@@ -3,9 +3,9 @@
 #include <string>
 #include <cstdlib>
 #include <cstring>
-
+//
 #include "display.h"
-#include "board.h"
+//#include "board.h"
 #include "application.h"
 #include "font_awesome_symbols.h"
 #include "audio_codec.h"

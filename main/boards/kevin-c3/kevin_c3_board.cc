@@ -3,6 +3,7 @@
 #include "application.h"
 #include "button.h"
 #include "config.h"
+#include "iot/thing_manager.h"
 #include "led/circular_strip.h"
 #include "led_strip_control.h"
 
@@ -53,8 +54,12 @@ private:
 
     // 物联网初始化，添加对 AI 可见设备
     void InitializeIot() {
+        auto& thing_manager = iot::ThingManager::GetInstance();
+        thing_manager.AddThing(iot::CreateThing("Speaker"));
+
         led_strip_ = new CircularStrip(BUILTIN_LED_GPIO, 8);
-        new LedStripControl(led_strip_);
+        auto led_strip_control = new LedStripControl(led_strip_);
+        thing_manager.AddThing(led_strip_control);
     }
 
 public:

@@ -15,16 +15,16 @@ private:
     bool discharging_ = false;
 
 public:
-    Battery() : Thing("Battery", "The battery of the device") {
+    Battery() : Thing("Battery", "电池管理") {
         // 定义设备的属性
-        properties_.AddNumberProperty("level", "Current battery level", [this]() -> int {
+        properties_.AddNumberProperty("level", "当前电量百分比", [this]() -> int {
             auto& board = Board::GetInstance();
             if (board.GetBatteryLevel(level_, charging_, discharging_)) {
                 return level_;
             }
             return 0;
         });
-        properties_.AddBooleanProperty("charging", "Whether the battery is charging", [this]() -> int {
+        properties_.AddBooleanProperty("charging", "是否充电中", [this]() -> int {
             return charging_;
         });
     }
