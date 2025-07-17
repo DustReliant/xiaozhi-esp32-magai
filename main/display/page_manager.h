@@ -28,14 +28,20 @@ public:
     virtual void Hide() = 0;
     virtual void Update() {}
     virtual bool HandleEvent(lv_event_t* e) { return false; }
+    virtual void OnDestroy() {}  // 销毁前回调
     
     lv_obj_t* GetContainer() const { return container_; }
+    bool IsVisible() const { return container_ && !lv_obj_has_flag(container_, LV_OBJ_FLAG_HIDDEN); }
 
 protected:
     lv_obj_t* parent_ = nullptr;
     lv_obj_t* container_ = nullptr;
     Display* display_ = nullptr;
     DisplayFonts fonts_;
+    
+    // 事件处理辅助方法
+    void AddEventHandler(lv_obj_t* obj, lv_event_cb_t cb, lv_event_code_t filter, void* user_data = nullptr);
+    void RemoveEventHandler(lv_obj_t* obj, lv_event_cb_t cb);
 };
 
 // 页面管理器类
@@ -78,6 +84,13 @@ private:
     PageType current_page_ = PageType::HOME;
     std::vector<PageType> page_history_;
     
+    // 页面缓存管理
+    static const size_t MAX_CACHED_PAGES = 3;  // 最大缓存页面数量
+    std::vector<PageType> page_cache_order_;   // 页面缓存顺序（LRU）
+    
+    // 定时器
+    lv_timer_t* page_manager_timer_ = nullptr;
+    
     // 状态栏元素
     lv_obj_t* ai_icon_ = nullptr;
     lv_obj_t* network_icon_ = nullptr;
@@ -89,6 +102,9 @@ private:
     // 私有方法
     void CreateStatusBar();
     void SetupEventHandlers();
+    void CreatePage(PageType page_type);
+    void UpdatePageCacheOrder(PageType page_type);
+    void CleanupOldestPage();
     static void OnSettingsButtonClicked(lv_event_t* e);
 };
 

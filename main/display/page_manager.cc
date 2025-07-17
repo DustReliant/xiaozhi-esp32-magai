@@ -2,6 +2,7 @@
 #include "pages/home_page.h"
 #include "pages/music_page.h"
 #include <esp_log.h>
+#include <algorithm>
 
 #define TAG "PageManager"
 
@@ -11,15 +12,58 @@ PageManager::PageManager(Display* display, DisplayFonts fonts) : display_(displa
 }
 
 PageManager::~PageManager() {
+    // 停止所有定时器
+    if (page_manager_timer_) {
+        lv_timer_del(page_manager_timer_);
+        page_manager_timer_ = nullptr;
+    }
+    
     // 清理页面
     for (auto& pair : pages_) {
-        delete pair.second;
+        if (pair.second) {
+            // 调用页面的销毁前回调
+            pair.second->OnDestroy();
+            delete pair.second;
+        }
     }
     pages_.clear();
     
-    // 清理UI对象
+    // 清理状态栏UI对象（按依赖关系反向清理）
+    if (settings_btn_) {
+        lv_obj_del(settings_btn_);
+        settings_btn_ = nullptr;
+    }
+    if (battery_icon_) {
+        lv_obj_del(battery_icon_);
+        battery_icon_ = nullptr;
+    }
+    if (mute_icon_) {
+        lv_obj_del(mute_icon_);
+        mute_icon_ = nullptr;
+    }
+    if (notification_area_) {
+        lv_obj_del(notification_area_);
+        notification_area_ = nullptr;
+    }
+    if (network_icon_) {
+        lv_obj_del(network_icon_);
+        network_icon_ = nullptr;
+    }
+    if (ai_icon_) {
+        lv_obj_del(ai_icon_);
+        ai_icon_ = nullptr;
+    }
+    
+    // 清理主容器（这会自动清理子对象）
     if (main_container_) {
         lv_obj_del(main_container_);
+        main_container_ = nullptr;
+    }
+    
+    // 最后清理状态栏
+    if (status_bar_) {
+        lv_obj_del(status_bar_);
+        status_bar_ = nullptr;
     }
 }
 
@@ -95,17 +139,9 @@ void PageManager::SetupStatusBar() {
 }
 
 void PageManager::SetupPages() {
-    // 创建主界面页面
-    pages_[PageType::HOME] = new HomePage(main_container_, display_, fonts_);
-    
-    // 创建音乐播放页面
-    pages_[PageType::MUSIC] = new MusicPage(main_container_, display_, fonts_);
-    
-    // 其他页面暂时用空实现，后续添加
-    // pages_[PageType::CHAT] = new ChatPage(main_container_, display_);
-    // pages_[PageType::SETTINGS] = new SettingsPage(main_container_, display_);
-    // pages_[PageType::WEATHER] = new WeatherPage(main_container_, display_);
-    // pages_[PageType::TIME] = new TimePage(main_container_, display_);
+    // 不再预先创建所有页面，改为懒加载模式
+    // 仅清空页面映射，页面将在首次访问时创建
+    pages_.clear();
     
     // 默认显示主界面
     SwitchToPage(PageType::HOME, false);
@@ -115,12 +151,20 @@ void PageManager::SwitchToPage(PageType page_type, bool animate) {
     ESP_LOGI(TAG, "Switching to page: %d", static_cast<int>(page_type));
     
     // 隐藏当前页面
-    if (pages_.find(current_page_) != pages_.end()) {
+    if (pages_.find(current_page_) != pages_.end() && pages_[current_page_]) {
         pages_[current_page_]->Hide();
     }
     
+    // 检查目标页面是否已存在，如不存在则创建
+    if (pages_.find(page_type) == pages_.end() || !pages_[page_type]) {
+        CreatePage(page_type);
+    } else {
+        // 页面已存在，更新缓存顺序
+        UpdatePageCacheOrder(page_type);
+    }
+    
     // 显示新页面
-    if (pages_.find(page_type) != pages_.end()) {
+    if (pages_[page_type]) {
         pages_[page_type]->Show();
         current_page_ = page_type;
         
@@ -129,8 +173,120 @@ void PageManager::SwitchToPage(PageType page_type, bool animate) {
         
         // 更新状态栏显示
         UpdateStatusBar();
+        
+        ESP_LOGI(TAG, "Successfully switched to page: %d, cached pages: %zu", 
+                 static_cast<int>(page_type), pages_.size());
     } else {
-        ESP_LOGE(TAG, "Page not found: %d", static_cast<int>(page_type));
+        ESP_LOGE(TAG, "Failed to create or find page: %d", static_cast<int>(page_type));
+    }
+}
+
+void PageManager::CreatePage(PageType page_type) {
+    if (!main_container_) {
+        ESP_LOGE(TAG, "Main container not initialized");
+        return;
+    }
+    
+    // 如果页面已存在，更新缓存顺序
+    if (pages_.find(page_type) != pages_.end() && pages_[page_type]) {
+        UpdatePageCacheOrder(page_type);
+        return;
+    }
+    
+    // 检查是否需要清理缓存
+    if (pages_.size() >= MAX_CACHED_PAGES) {
+        CleanupOldestPage();
+    }
+    
+    // 根据页面类型创建对应页面
+    switch (page_type) {
+        case PageType::HOME:
+            pages_[page_type] = new HomePage(main_container_, display_, fonts_);
+            ESP_LOGI(TAG, "Created HomePage");
+            break;
+            
+        case PageType::MUSIC:
+            pages_[page_type] = new MusicPage(main_container_, display_, fonts_);
+            ESP_LOGI(TAG, "Created MusicPage");
+            break;
+            
+        case PageType::CHAT:
+            // pages_[page_type] = new ChatPage(main_container_, display_, fonts_);
+            ESP_LOGW(TAG, "ChatPage not implemented yet");
+            break;
+            
+        case PageType::SETTINGS:
+            // pages_[page_type] = new SettingsPage(main_container_, display_, fonts_);
+            ESP_LOGW(TAG, "SettingsPage not implemented yet");
+            break;
+            
+        case PageType::WEATHER:
+            // pages_[page_type] = new WeatherPage(main_container_, display_, fonts_);
+            ESP_LOGW(TAG, "WeatherPage not implemented yet");
+            break;
+            
+        case PageType::TIME:
+            // pages_[page_type] = new TimePage(main_container_, display_, fonts_);
+            ESP_LOGW(TAG, "TimePage not implemented yet");
+            break;
+            
+        default:
+            ESP_LOGE(TAG, "Unknown page type: %d", static_cast<int>(page_type));
+            return;
+    }
+    
+    // 更新缓存顺序
+    if (pages_[page_type]) {
+        UpdatePageCacheOrder(page_type);
+    }
+}
+
+void PageManager::UpdatePageCacheOrder(PageType page_type) {
+    // 移除已存在的记录
+    auto it = std::find(page_cache_order_.begin(), page_cache_order_.end(), page_type);
+    if (it != page_cache_order_.end()) {
+        page_cache_order_.erase(it);
+    }
+    
+    // 添加到最前面（最近使用）
+    page_cache_order_.insert(page_cache_order_.begin(), page_type);
+    
+    ESP_LOGD(TAG, "Updated page cache order, current size: %zu", page_cache_order_.size());
+}
+
+void PageManager::CleanupOldestPage() {
+    if (page_cache_order_.empty()) {
+        return;
+    }
+    
+    // 获取最久未使用的页面（列表末尾）
+    PageType oldest_page = page_cache_order_.back();
+    
+    // 如果是当前页面，不能清理
+    if (oldest_page == current_page_) {
+        if (page_cache_order_.size() > 1) {
+            oldest_page = page_cache_order_[page_cache_order_.size() - 2];
+        } else {
+            return; // 只有当前页面，不清理
+        }
+    }
+    
+    // 删除页面
+    auto it = pages_.find(oldest_page);
+    if (it != pages_.end() && it->second) {
+        ESP_LOGI(TAG, "Cleaning up oldest page: %d", static_cast<int>(oldest_page));
+        
+        // 调用页面的销毁前回调
+        it->second->OnDestroy();
+        
+        delete it->second;
+        pages_.erase(it);
+    }
+    
+    // 从缓存顺序中移除
+    auto cache_it = std::find(page_cache_order_.begin(), page_cache_order_.end(), oldest_page);
+    if (cache_it != page_cache_order_.end()) {
+        page_cache_order_.erase(cache_it);
     }
 }
 
@@ -151,7 +307,7 @@ void PageManager::GoBack() {
 
 BasePage* PageManager::GetCurrentPageObject() const {
     auto it = pages_.find(current_page_);
-    return (it != pages_.end()) ? it->second.get() : nullptr;
+    return (it != pages_.end()) ? it->second : nullptr;
 }
 
 void PageManager::PushToHistory(PageType page_type) {
@@ -216,33 +372,37 @@ void PageManager::ApplyTheme() {
     
     std::string theme = display_->GetTheme();
     
+    // 应用状态栏主题
     if (theme == "dark") {
         // 深色主题
         lv_obj_set_style_bg_color(status_bar_, lv_color_hex(0x121212), 0);
         lv_obj_set_style_bg_color(main_container_, lv_color_hex(0x121212), 0);
         
-        lv_obj_set_style_text_color(ai_icon_, lv_color_white(), 0);
-        lv_obj_set_style_text_color(network_icon_, lv_color_white(), 0);
-        lv_obj_set_style_text_color(notification_area_, lv_color_white(), 0);
-        lv_obj_set_style_text_color(mute_icon_, lv_color_white(), 0);
-        lv_obj_set_style_text_color(battery_icon_, lv_color_white(), 0);
+        if (ai_icon_) lv_obj_set_style_text_color(ai_icon_, lv_color_white(), 0);
+        if (network_icon_) lv_obj_set_style_text_color(network_icon_, lv_color_white(), 0);
+        if (notification_area_) lv_obj_set_style_text_color(notification_area_, lv_color_white(), 0);
+        if (mute_icon_) lv_obj_set_style_text_color(mute_icon_, lv_color_white(), 0);
+        if (battery_icon_) lv_obj_set_style_text_color(battery_icon_, lv_color_white(), 0);
     } else {
         // 浅色主题
         lv_obj_set_style_bg_color(status_bar_, lv_color_hex(0xe9ecef), 0);
         lv_obj_set_style_bg_color(main_container_, lv_color_white(), 0);
         
-        lv_obj_set_style_text_color(ai_icon_, lv_color_black(), 0);
-        lv_obj_set_style_text_color(network_icon_, lv_color_black(), 0);
-        lv_obj_set_style_text_color(notification_area_, lv_color_black(), 0);
-        lv_obj_set_style_text_color(mute_icon_, lv_color_black(), 0);
-        lv_obj_set_style_text_color(battery_icon_, lv_color_black(), 0);
+        if (ai_icon_) lv_obj_set_style_text_color(ai_icon_, lv_color_black(), 0);
+        if (network_icon_) lv_obj_set_style_text_color(network_icon_, lv_color_black(), 0);
+        if (notification_area_) lv_obj_set_style_text_color(notification_area_, lv_color_black(), 0);
+        if (mute_icon_) lv_obj_set_style_text_color(mute_icon_, lv_color_black(), 0);
+        if (battery_icon_) lv_obj_set_style_text_color(battery_icon_, lv_color_black(), 0);
     }
     
     // 通知所有页面更新主题
     for (auto& [page_type, page] : pages_) {
-        // 可以添加页面主题更新方法
-        page->Update();
+        if (page) {
+            page->Update();
+        }
     }
+    
+    ESP_LOGI(TAG, "Applied theme: %s to %zu pages", theme.c_str(), pages_.size());
 }
 
 void PageManager::OnSettingsButtonClicked(lv_event_t* e) {
@@ -251,4 +411,17 @@ void PageManager::OnSettingsButtonClicked(lv_event_t* e) {
     
     // 切换到设置页面 (暂时切换到音乐页面作为演示)
     manager->SwitchToPage(PageType::MUSIC, true);
+}
+
+// BasePage 事件处理辅助方法实现
+void BasePage::AddEventHandler(lv_obj_t* obj, lv_event_cb_t cb, lv_event_code_t filter, void* user_data) {
+    if (obj && cb) {
+        lv_obj_add_event_cb(obj, cb, filter, user_data ? user_data : this);
+    }
+}
+
+void BasePage::RemoveEventHandler(lv_obj_t* obj, lv_event_cb_t cb) {
+    if (obj && cb) {
+        lv_obj_remove_event_cb(obj, cb);
+    }
 } 

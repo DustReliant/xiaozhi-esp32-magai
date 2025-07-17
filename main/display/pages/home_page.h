@@ -7,7 +7,7 @@
 class HomePage : public BasePage {
 public:
     HomePage(lv_obj_t* parent, Display* display, DisplayFonts fonts);
-    ~HomePage() override = default;
+    ~HomePage() override;
     
     void Create() override;
     void Show() override;

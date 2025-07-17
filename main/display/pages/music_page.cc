@@ -13,6 +13,14 @@ MusicPage::MusicPage(lv_obj_t* parent, Display* display, DisplayFonts fonts)
     Create();
 }
 
+MusicPage::~MusicPage() {
+    // 清理UI对象（LVGL会自动清理子对象，所以只需要清理主容器）
+    if (container_) {
+        lv_obj_del(container_);
+        container_ = nullptr;
+    }
+}
+
 void MusicPage::Create() {
     // 创建主容器
     container_ = lv_obj_create(parent_);

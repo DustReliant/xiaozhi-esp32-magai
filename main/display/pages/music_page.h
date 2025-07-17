@@ -7,7 +7,7 @@
 class MusicPage : public BasePage {
 public:
     MusicPage(lv_obj_t* parent, Display* display, DisplayFonts fonts);
-    ~MusicPage() override = default;
+    ~MusicPage() override;
     
     void Create() override;
     void Show() override;
