@@ -39,9 +39,18 @@ protected:
     Display* display_ = nullptr;
     DisplayFonts fonts_;
     
-    // 事件处理辅助方法
-    void AddEventHandler(lv_obj_t* obj, lv_event_cb_t cb, lv_event_code_t filter, void* user_data = nullptr);
-    void RemoveEventHandler(lv_obj_t* obj, lv_event_cb_t cb);
+    // 事件处理辅助方法（内联实现）
+    void AddEventHandler(lv_obj_t* obj, lv_event_cb_t cb, lv_event_code_t filter, void* user_data = nullptr) {
+        if (obj && cb) {
+            lv_obj_add_event_cb(obj, cb, filter, user_data ? user_data : this);
+        }
+    }
+    
+    void RemoveEventHandler(lv_obj_t* obj, lv_event_cb_t cb) {
+        if (obj && cb) {
+            lv_obj_remove_event_cb(obj, cb);
+        }
+    }
 };
 
 // 页面管理器类

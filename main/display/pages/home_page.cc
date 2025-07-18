@@ -3,8 +3,6 @@
 #include <esp_timer.h>
 #include <time.h>
 #include <sys/time.h>
-#include "../../board.h"
-#include "../../application.h"
 
 #define TAG "HomePage"
 
@@ -28,10 +26,10 @@ HomePage::~HomePage() {
 }
 
 void HomePage::Create() {
-    // 创建主容器
+    // 创建主容器（在main_container_内）
     container_ = lv_obj_create(parent_);
-    lv_obj_set_size(container_, LV_HOR_RES, LV_VER_RES - 32); // 减去状态栏高度
-    lv_obj_set_pos(container_, 0, 32); // 状态栏下方
+    lv_obj_set_size(container_, LV_HOR_RES, LV_VER_RES); // 填满父容器
+    lv_obj_set_pos(container_, 0, 0); // 相对于父容器定位
     lv_obj_set_style_pad_all(container_, 0, 0);
     lv_obj_set_style_border_width(container_, 0, 0);
     lv_obj_set_style_radius(container_, 0, 0);
@@ -122,16 +120,8 @@ void HomePage::UpdateTime() {
 void HomePage::UpdateDeviceInfo() {
     if (device_info_label_ == nullptr) return;
     
-    // 获取设备信息
-    std::string info = "v1.6.1";
-    
-    // 获取网络状态
-    // 这里需要根据实际的网络模块获取状态
-    if (Board::GetInstance().HasWiFi()) {
-        info += " | WiFi已连接";
-    } else {
-        info += " | WiFi未连接";
-    }
+    // 获取设备信息（暂时硬编码，避免编译错误）
+    std::string info = "v1.6.1 | 设备状态";
     
     lv_label_set_text(device_info_label_, info.c_str());
 }

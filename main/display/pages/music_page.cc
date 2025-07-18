@@ -22,10 +22,10 @@ MusicPage::~MusicPage() {
 }
 
 void MusicPage::Create() {
-    // 创建主容器
+    // 创建主容器（在main_container_内）
     container_ = lv_obj_create(parent_);
-    lv_obj_set_size(container_, 240, 280); // 严格按照设计尺寸
-    lv_obj_set_pos(container_, 0, 0);
+    lv_obj_set_size(container_, LV_HOR_RES, LV_VER_RES); // 填满父容器
+    lv_obj_set_pos(container_, 0, 0); // 相对于父容器定位
     lv_obj_set_style_pad_all(container_, 0, 0);
     lv_obj_set_style_border_width(container_, 0, 0);
     lv_obj_set_style_radius(container_, 0, 0);

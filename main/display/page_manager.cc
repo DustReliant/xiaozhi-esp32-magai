@@ -411,17 +411,4 @@ void PageManager::OnSettingsButtonClicked(lv_event_t* e) {
     
     // 切换到设置页面 (暂时切换到音乐页面作为演示)
     manager->SwitchToPage(PageType::MUSIC, true);
-}
-
-// BasePage 事件处理辅助方法实现
-void BasePage::AddEventHandler(lv_obj_t* obj, lv_event_cb_t cb, lv_event_code_t filter, void* user_data) {
-    if (obj && cb) {
-        lv_obj_add_event_cb(obj, cb, filter, user_data ? user_data : this);
-    }
-}
-
-void BasePage::RemoveEventHandler(lv_obj_t* obj, lv_event_cb_t cb) {
-    if (obj && cb) {
-        lv_obj_remove_event_cb(obj, cb);
-    }
 } 
