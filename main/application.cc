@@ -7,6 +7,8 @@
 #include "websocket_protocol.h"
 #include "assets/lang_config.h"
 #include "mcp_server.h"
+#include "app/app_manager.h"
+#include "app/sntp_time.h"
 #include "assets.h"
 #include "settings.h"
 
@@ -384,6 +386,10 @@ void Application::Start() {
     /* Wait for the network to be ready */
     board.StartNetwork();
 
+    // 网络就绪:启动 SNTP 时间同步并初始化 App 体系
+    SntpTime::GetInstance().Start();
+    AppManager::GetInstance().Initialize();
+
     // Update the status bar immediately to show the network state
     display->UpdateStatusBar(true);
 
@@ -601,7 +607,10 @@ void Application::MainEventLoop() {
             clock_ticks_++;
             auto display = Board::GetInstance().GetDisplay();
             display->UpdateStatusBar();
-        
+
+            // 分发给 App 体系(天气时钟走秒等)
+            AppManager::GetInstance().OnClockTick();
+
             // Print the debug info every 10 seconds
             if (clock_ticks_ % 10 == 0) {
                 // SystemInfo::PrintTaskCpuUsage(pdMS_TO_TICKS(1000));

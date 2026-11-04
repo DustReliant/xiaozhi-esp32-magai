@@ -11,6 +11,8 @@
 #include <esp_pthread.h>
 
 #include "application.h"
+#include "app/app_manager.h"
+#include "weather_clock/weather_clock.h"
 #include "display.h"
 #include "oled_display.h"
 #include "board.h"
@@ -120,6 +122,57 @@ void McpServer::AddCommonTools() {
             });
     }
 #endif
+
+    // magai App 体系语音控制工具
+    AddTool("self.app.launch",
+        "Launch an app on the device. Available apps: `weather-clock` (天气时钟), `2048` (2048 game), `music` (在线音乐). "
+        "Use `chat` to go back to the voice chat screen.",
+        PropertyList({
+            Property("name", kPropertyTypeString)
+        }),
+        [](const PropertyList& properties) -> ReturnValue {
+            auto name = properties["name"].value<std::string>();
+            auto& manager = AppManager::GetInstance();
+            if (name == "chat" || name == "聊天") {
+                manager.BackToChat();
+                return true;
+            }
+            auto* app = manager.FindApp(name);
+            if (app == nullptr) {
+                throw std::runtime_error("Unknown app: " + name);
+            }
+            manager.SwitchTo(app);
+            return true;
+        });
+
+    AddTool("self.app.list",
+        "List available apps on the device.",
+        PropertyList(),
+        [](const PropertyList& properties) -> ReturnValue {
+            auto& manager = AppManager::GetInstance();
+            cJSON* root = cJSON_CreateObject();
+            cJSON* apps = cJSON_CreateArray();
+            for (auto* app : manager.apps()) {
+                cJSON_AddItemToArray(apps, cJSON_CreateString(app->name().c_str()));
+            }
+            cJSON_AddItemToObject(root, "apps", apps);
+            return root;
+        });
+
+    AddTool("self.weather.set_city",
+        "Set the city for the weather-clock app. Use a Chinese city name like `上海` or `广州`. "
+        "After being set manually, auto IP-location will no longer override it.",
+        PropertyList({
+            Property("city", kPropertyTypeString)
+        }),
+        [](const PropertyList& properties) -> ReturnValue {
+            auto city = properties["city"].value<std::string>();
+            if (city.empty()) {
+                throw std::runtime_error("city is empty");
+            }
+            WeatherClockApp::GetInstance().SetCity(city, true);
+            return true;
+        });
 
     // Restore the original tools list to the end of the tools list
     tools_.insert(tools_.end(), original_tools.begin(), original_tools.end());
