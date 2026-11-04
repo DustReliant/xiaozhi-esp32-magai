@@ -51,6 +51,7 @@ private:
     lv_obj_t* time_label_ = nullptr;
     lv_obj_t* date_label_ = nullptr;      // 日期+城市一行
     lv_obj_t* weather_card_ = nullptr;    // 天气卡片容器
+    lv_obj_t* weather_icon_backdrop_ = nullptr;
     lv_obj_t* weather_icon_label_ = nullptr;
     lv_obj_t* weather_text_label_ = nullptr; // 卡片底部详情行
     lv_obj_t* temp_label_ = nullptr;

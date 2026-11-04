@@ -39,6 +39,19 @@ static constexpr uint32_t kColorCard     = 0x252836; // 卡片
 static constexpr uint32_t kColorTextMain = 0xE8EAF0; // 主文字
 static constexpr uint32_t kColorTextSub  = 0x9AA0B4; // 次文字
 
+// 天气主题色:让不同天气有可区分的情绪色(卡片描边/温度数字)
+static uint32_t WeatherThemeColor(int code) {
+    if (code == 0) return 0xFFB636;  // 晴:暖阳金
+    if (code <= 2) return 0x7EC8F2;  // 多云:天蓝
+    if (code == 3) return 0x9AA0B4;  // 阴:灰蓝
+    if (code <= 48) return 0xB8A9D9; // 雾:淡紫
+    if (code <= 57) return 0x79C9E8; // 毛毛雨:水蓝
+    if (code <= 67) return 0x4A9DFF; // 雨:品牌蓝
+    if (code <= 77) return 0xC5E8FF; // 雪:冰蓝
+    if (code <= 86) return 0x59B9D2; // 阵雨/阵雪:青蓝
+    return 0xB06BF5;                 // 雷雨:紫电
+}
+
 void WeatherClockApp::Enter(lv_obj_t* parent) {
     auto display = Board::GetInstance().GetDisplay();
     auto lvgl_theme = static_cast<LvglTheme*>(display->GetTheme());
@@ -80,12 +93,25 @@ void WeatherClockApp::Enter(lv_obj_t* parent) {
     lv_obj_set_style_pad_all(weather_card_, 0, 0);
     lv_obj_clear_flag(weather_card_, LV_OBJ_FLAG_SCROLLABLE);
 
-    /* 卡片左:天气图标(48px 级图标,大图标字体) */
-    weather_icon_label_ = lv_label_create(weather_card_);
+    /* 卡片左:圆形柔光底 + 彩色天气符号 */
+    weather_icon_backdrop_ = lv_obj_create(weather_card_);
+    lv_obj_set_size(weather_icon_backdrop_, 68, 68);
+    lv_obj_align(weather_icon_backdrop_, LV_ALIGN_LEFT_MID, 12, -8);
+    lv_obj_set_style_radius(weather_icon_backdrop_, LV_RADIUS_CIRCLE, 0);
+    lv_obj_set_style_bg_color(weather_icon_backdrop_, lv_color_hex(0xFFB636), 0);
+    lv_obj_set_style_bg_opa(weather_icon_backdrop_, LV_OPA_20, 0);
+    lv_obj_set_style_border_width(weather_icon_backdrop_, 0, 0);
+    lv_obj_set_style_pad_all(weather_icon_backdrop_, 0, 0);
+    lv_obj_clear_flag(weather_icon_backdrop_, LV_OBJ_FLAG_SCROLLABLE);
+
+    weather_icon_label_ = lv_label_create(weather_icon_backdrop_);
     lv_obj_set_style_text_font(weather_icon_label_, large_icon_font, 0);
-    lv_obj_set_style_text_color(weather_icon_label_, lv_color_hex(kColorTextMain), 0);
-    lv_obj_align(weather_icon_label_, LV_ALIGN_LEFT_MID, 16, -8);
+    lv_obj_set_style_text_color(weather_icon_label_, lv_color_hex(0xFFB636), 0);
+    lv_obj_set_style_transform_scale(weather_icon_label_, 360, 0);
+    lv_obj_set_style_transform_pivot_x(weather_icon_label_, 15, 0);
+    lv_obj_set_style_transform_pivot_y(weather_icon_label_, 15, 0);
     lv_label_set_text(weather_icon_label_, FONT_AWESOME_CLOUD);
+    lv_obj_center(weather_icon_label_);
 
     /* 卡片右:温度(Montserrat48 数字+°,主文字色) */
     temp_label_ = lv_label_create(weather_card_);
@@ -112,6 +138,7 @@ void WeatherClockApp::Exit() {
     time_label_ = nullptr;
     date_label_ = nullptr;
     weather_card_ = nullptr;
+    weather_icon_backdrop_ = nullptr;
     weather_icon_label_ = nullptr;
     weather_text_label_ = nullptr;
     temp_label_ = nullptr;
@@ -295,6 +322,19 @@ void WeatherClockApp::UpdateWeatherUi() {
     snprintf(buf, sizeof(buf), "%.0f°C", (double)weather_.temperature);
     lv_label_set_text(temp_label_, buf);
     lv_label_set_text(weather_icon_label_, WeatherCodeToIcon(weather_.weather_code));
+    lv_obj_center(weather_icon_label_);
+    /* 天气情绪色:图标着色 + 卡片描边 + 温度数字同色 */
+    uint32_t theme = WeatherThemeColor(weather_.weather_code);
+    lv_obj_set_style_text_color(weather_icon_label_, lv_color_hex(theme), 0);
+    lv_obj_set_style_text_color(temp_label_, lv_color_hex(theme), 0);
+    if (weather_icon_backdrop_ != nullptr) {
+        lv_obj_set_style_bg_color(weather_icon_backdrop_, lv_color_hex(theme), 0);
+    }
+    if (weather_card_ != nullptr) {
+        lv_obj_set_style_border_width(weather_card_, 2, 0);
+        lv_obj_set_style_border_color(weather_card_, lv_color_hex(theme), 0);
+        lv_obj_set_style_border_opa(weather_card_, LV_OPA_60, 0);
+    }
 }
 
 void WeatherClockApp::UpdateClockUi() {
@@ -308,16 +348,27 @@ void WeatherClockApp::UpdateClockUi() {
 }
 
 const char* WeatherClockApp::WeatherCodeToText(int code) {
-    if (code == 0) return "晴";
-    if (code <= 2) return "多云";
-    if (code == 3) return "阴";
-    if (code <= 48) return "雾";
-    if (code <= 57) return "毛毛雨";
-    if (code <= 67) return "雨";
-    if (code <= 77) return "雪";
-    if (code <= 82) return "阵雨";
-    if (code <= 86) return "阵雪";
-    return "雷雨";
+    if (code == 0) return "晴空万里";
+    if (code == 1) return "晴间多云";
+    if (code == 2) return "局部多云";
+    if (code == 3) return "阴天";
+    if (code == 45 || code == 48) return "雾";
+    if (code == 51 || code == 56) return "微量毛毛雨";
+    if (code == 53 || code == 57) return "毛毛雨";
+    if (code == 55) return "强毛毛雨";
+    if (code == 61 || code == 66) return "小雨";
+    if (code == 63) return "中雨";
+    if (code == 65 || code == 67) return "大雨";
+    if (code == 71) return "小雪";
+    if (code == 73) return "中雪";
+    if (code == 75 || code == 77) return "大雪";
+    if (code == 80) return "零星阵雨";
+    if (code == 81) return "阵雨";
+    if (code == 82) return "强阵雨";
+    if (code == 85) return "阵雪";
+    if (code == 86) return "强阵雪";
+    if (code == 95) return "雷雨";
+    return "雷暴伴冰雹";
 }
 
 const char* WeatherClockApp::WeatherCodeToIcon(int code) {
@@ -325,7 +376,14 @@ const char* WeatherClockApp::WeatherCodeToIcon(int code) {
     if (code <= 2) return FONT_AWESOME_CLOUD_SUN;
     if (code == 3) return FONT_AWESOME_CLOUD;
     if (code <= 48) return FONT_AWESOME_SMOG;
-    if (code <= 82) return FONT_AWESOME_CLOUD_RAIN;
-    if (code <= 86) return FONT_AWESOME_SNOWFLAKE;
+    if (code <= 55) return FONT_AWESOME_CLOUD_DRIZZLE;
+    if (code <= 57) return FONT_AWESOME_CLOUD_SLEET;
+    if (code <= 65) return FONT_AWESOME_CLOUD_RAIN;
+    if (code <= 67) return FONT_AWESOME_CLOUD_HAIL;
+    if (code <= 77) return FONT_AWESOME_SNOWFLAKE;
+    if (code <= 82) return code == 80 ? FONT_AWESOME_CLOUD_RAIN : FONT_AWESOME_CLOUD_SHOWERS_HEAVY;
+    if (code <= 86) return FONT_AWESOME_SNOWFLAKES;
+    if (code == 95) return FONT_AWESOME_CLOUD_BOLT;
+    if (code == 96 || code == 99) return FONT_AWESOME_CLOUD_HAIL;
     return FONT_AWESOME_CLOUD_BOLT;
 }

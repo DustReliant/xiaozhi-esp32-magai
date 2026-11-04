@@ -54,7 +54,7 @@ void Game2048App::Enter(lv_obj_t* parent) {
 
     score_label_ = lv_label_create(score_card_);
     lv_obj_set_style_text_font(score_label_, text_font, 0);
-    lv_obj_set_style_text_color(score_label_, lv_color_hex(kColorTextMain), 0);
+    lv_obj_set_style_text_color(score_label_, lv_color_hex(0x4A9DFF), 0); // 分数:蓝
     lv_obj_center(score_label_);
     lv_label_set_text(score_label_, "分数 0");
 
@@ -70,7 +70,7 @@ void Game2048App::Enter(lv_obj_t* parent) {
 
     best_label_ = lv_label_create(best_card_);
     lv_obj_set_style_text_font(best_label_, text_font, 0);
-    lv_obj_set_style_text_color(best_label_, lv_color_hex(kColorTextMain), 0);
+    lv_obj_set_style_text_color(best_label_, lv_color_hex(0xFFB636), 0); // 最佳:金
     lv_obj_center(best_label_);
     lv_label_set_text_fmt(best_label_, "最佳 %d", best_);
 

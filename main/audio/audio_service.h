@@ -38,6 +38,9 @@
 #define OPUS_FRAME_DURATION_MS 60
 #define MAX_ENCODE_TASKS_IN_QUEUE 2
 #define MAX_PLAYBACK_TASKS_IN_QUEUE 2
+#define MAX_MUSIC_PCM_TASKS_IN_QUEUE 48
+#define MUSIC_STARTUP_BUFFER_TASKS 20
+#define MUSIC_REBUFFER_TIMEOUT_MS 60
 #define MAX_DECODE_PACKETS_IN_QUEUE (2400 / OPUS_FRAME_DURATION_MS)
 #define MAX_SEND_PACKETS_IN_QUEUE (2400 / OPUS_FRAME_DURATION_MS)
 #define AUDIO_TESTING_MAX_DURATION_MS 10000
@@ -106,6 +109,10 @@ public:
     bool PushPacketToDecodeQueue(std::unique_ptr<AudioStreamPacket> packet, bool wait = false);
     std::unique_ptr<AudioStreamPacket> PopPacketFromSendQueue();
     void PlaySound(const std::string_view& sound);
+    void StartMusicPlayback();
+    void StopMusicPlayback(bool drain_queued_audio = false);
+    bool PushMusicPcm(std::vector<int16_t>&& pcm);
+    bool IsMusicPlaybackActive();
     bool ReadAudioData(std::vector<int16_t>& data, int sample_rate, int samples);
     void ResetDecoder();
     void SetModelsList(srmodel_list_t* models_list);
@@ -137,6 +144,9 @@ private:
     std::deque<std::unique_ptr<AudioStreamPacket>> audio_testing_queue_;
     std::deque<std::unique_ptr<AudioTask>> audio_encode_queue_;
     std::deque<std::unique_ptr<AudioTask>> audio_playback_queue_;
+    bool music_playback_active_ = false;
+    bool music_playback_ready_ = false;
+    bool audio_output_in_progress_ = false;
     // For server AEC
     std::deque<uint32_t> timestamp_queue_;
 

@@ -29,6 +29,7 @@ private:
 
     lv_obj_t* title_label_ = nullptr;
     lv_obj_t* back_btn_ = nullptr;
+    lv_obj_t* list_cont_ = nullptr;
     std::vector<lv_obj_t*> items_;  // 菜单项(含首项"聊天")
     int selected_ = 0;              // 0=聊天,1..N=apps_[i-1]
 };

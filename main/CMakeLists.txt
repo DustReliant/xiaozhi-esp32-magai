@@ -48,6 +48,8 @@ list(APPEND SOURCES
             "app/weather_clock/weather_clock.cc"
             "app/game2048/game2048.cc"
             "app/music/music_app.cc"
+            "app/bili_fans/bili_fans.cc"
+            "app/heartbeat/heartbeat_app.cc"
 )
 
 # Add board common files

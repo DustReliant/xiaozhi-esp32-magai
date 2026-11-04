@@ -15,7 +15,7 @@
  * - 聊天界面是"桌面",App 以全屏覆盖层形式盖在聊天 UI 之上
  * - 按键事件先路由给活跃 App,未消费且无活跃 App 时走系统默认行为
  * - 时钟 tick 来自 Application 的 MAIN_EVENT_CLOCK_TICK 分发
- * - SwitchTo(nullptr) 回到启动器,启动器选"聊天"则关闭覆盖层回聊天
+ * - SwitchTo(nullptr) 关闭覆盖层并回到聊天界面
  */
 class AppManager {
 public:

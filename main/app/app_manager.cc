@@ -10,6 +10,8 @@
 #include "weather_clock/weather_clock.h"
 #include "game2048/game2048.h"
 #include "music/music_app.h"
+#include "bili_fans/bili_fans.h"
+#include "heartbeat/heartbeat_app.h"
 
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
@@ -34,6 +36,8 @@ void AppManager::Initialize() {
     RegisterApp(&WeatherClockApp::GetInstance());
     RegisterApp(&Game2048App::GetInstance());
     RegisterApp(&MusicApp::GetInstance());
+    RegisterApp(&BiliFansApp::GetInstance());
+    RegisterApp(&HeartbeatApp::GetInstance());
     ESP_LOGI(TAG, "AppManager initialized with %d apps", (int)apps_.size());
 
     // 后台按出口 IP 定位城市,自动设置天气城市(用户手动设过则跳过)
@@ -65,6 +69,8 @@ void AppManager::OpenLauncher() {
         current_app_ = nullptr;
     }
 
+    // Remove the previous app's view tree before placing the launcher on screen.
+    DestroyOverlay();
     CreateOverlay();
     if (overlay_ == nullptr) {
         ESP_LOGE(TAG, "Failed to create overlay for launcher");
@@ -76,7 +82,7 @@ void AppManager::OpenLauncher() {
 }
 
 void AppManager::SwitchTo(App* app) {
-    if (app == current_app_) {
+    if (app == current_app_ && !launcher_open_) {
         return;
     }
     auto display = Board::GetInstance().GetDisplay();
@@ -90,6 +96,9 @@ void AppManager::SwitchTo(App* app) {
         current_app_->Exit();
         current_app_ = nullptr;
     }
+    // Apps and the launcher share an overlay only while active. Destroying it here
+    // prevents controls from a previous screen accumulating behind the next one.
+    DestroyOverlay();
     if (app != nullptr) {
         CreateOverlay();
         if (overlay_ == nullptr) {

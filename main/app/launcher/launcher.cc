@@ -18,11 +18,14 @@ static constexpr uint32_t kColorAccent   = 0x4A9DFF; // 主强调
 static constexpr uint32_t kColorTextMain = 0xE8EAF0; // 主文字
 static constexpr uint32_t kColorTextSub  = 0x9AA0B4; // 次文字
 
-// 布局:边距 12,内容宽 216,磁贴 216x44,间距 8
+// 布局:边距 12,内容宽 216,磁贴 216x40,间距 4
 static constexpr int kMargin       = 12;
 static constexpr int kContentWidth = 216;
-static constexpr int kTileHeight   = 44;
-static constexpr int kTileYPitch   = kTileHeight + 8; // 44 + 8
+static constexpr int kTileHeight   = 40;
+static constexpr int kTileGap      = 4;
+static constexpr int kTileYPitch   = kTileHeight + kTileGap;
+static constexpr int kListTop      = 66;
+static constexpr int kListBottom   = 12;
 
 // 磁贴/返回键点击:user_data 为索引,-1=返回键,0=聊天,1..N=apps_[i-1]
 // 切换会销毁启动器所在覆盖层,不能在事件回调内直接删,经 lv_async_call 延后
@@ -85,28 +88,49 @@ void Launcher::Enter(lv_obj_t* parent) {
     lv_obj_align(back_label, LV_ALIGN_LEFT_MID, 66, 0);
     lv_label_set_text(back_label, "返回聊天");
 
-    /* 菜单磁贴:聊天 + N 个 App,y=66 起步,间距 8 */
+    /* 可滚动菜单:聊天 + N 个 App */
+    list_cont_ = lv_obj_create(parent);
+    lv_obj_set_pos(list_cont_, kMargin, kListTop);
+    lv_obj_set_size(list_cont_, kContentWidth, lv_obj_get_height(parent) - kListTop - kListBottom);
+    lv_obj_set_style_bg_opa(list_cont_, LV_OPA_TRANSP, 0);
+    lv_obj_set_style_border_width(list_cont_, 0, 0);
+    lv_obj_set_style_pad_all(list_cont_, 0, 0);
+    lv_obj_add_flag(list_cont_, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_scroll_dir(list_cont_, LV_DIR_VER);
+    lv_obj_set_scrollbar_mode(list_cont_, LV_SCROLLBAR_MODE_OFF);
+
     auto& manager = AppManager::GetInstance();
     int total = 1 + (int)manager.apps().size(); // 聊天 + N 个 App
 
     for (int i = 0; i < total; i++) {
         bool is_chat = (i == 0);
         const char* name = is_chat ? "聊天助手" : manager.apps()[i - 1]->name().c_str();
-        // 图标:聊天=评论,天气=云晴,2048=手柄,音乐=音符
+        // 图标:聊天=评论,天气=云晴,2048=手柄,音乐=音符,B站=心
+        // 图标色:每个 App 一个主题色,打破单一蓝
         const char* icon = FONT_AWESOME_COMMENT;
+        uint32_t icon_color = 0x4A9DFF; // 聊天:品牌蓝
         if (!is_chat) {
             const std::string& app_name = manager.apps()[i - 1]->name();
             if (app_name == "weather-clock") {
                 icon = FONT_AWESOME_CLOUD_SUN;
+                icon_color = 0xFFB636; // 天气:暖阳金
             } else if (app_name == "2048") {
                 icon = FONT_AWESOME_GAMEPAD;
+                icon_color = 0x3ECF6E; // 2048:活力绿
             } else if (app_name == "music") {
                 icon = FONT_AWESOME_MUSIC;
+                icon_color = 0xB06BF5; // 音乐:紫
+            } else if (app_name == "bili-fans") {
+                icon = FONT_AWESOME_HEART;
+                icon_color = 0xFB7299; // B站粉
+            } else if (app_name == "heartbeat") {
+                icon = FONT_AWESOME_HEART;
+                icon_color = 0xE5484D; // 心跳红
             }
         }
 
-        auto item = lv_obj_create(parent);
-        lv_obj_set_pos(item, kMargin, 66 + i * kTileYPitch);
+        auto item = lv_obj_create(list_cont_);
+        lv_obj_set_pos(item, 0, i * kTileYPitch);
         lv_obj_set_size(item, kContentWidth, kTileHeight);
         lv_obj_set_style_radius(item, 10, 0);
         lv_obj_set_style_bg_color(item, lv_color_hex(kColorCard), 0);
@@ -116,10 +140,10 @@ void Launcher::Enter(lv_obj_t* parent) {
         lv_obj_clear_flag(item, LV_OBJ_FLAG_SCROLLABLE);
         lv_obj_add_event_cb(item, LauncherItemClickCb, LV_EVENT_CLICKED, (void*)(intptr_t)i);
 
-        /* 左 40px 图标区(主强调色) */
+        /* 左 40px 图标区(App 主题色) */
         auto icon_label = lv_label_create(item);
         lv_obj_set_style_text_font(icon_label, icon_font, 0);
-        lv_obj_set_style_text_color(icon_label, lv_color_hex(kColorAccent), 0);
+        lv_obj_set_style_text_color(icon_label, lv_color_hex(icon_color), 0);
         lv_obj_align(icon_label, LV_ALIGN_LEFT_MID, 12, 0);
         lv_label_set_text(icon_label, icon);
 
@@ -143,6 +167,7 @@ void Launcher::Exit() {
     // 覆盖层由 AppManager 统一销毁,这里只清引用
     title_label_ = nullptr;
     back_btn_ = nullptr;
+    list_cont_ = nullptr;
     items_.clear();
 }
 
@@ -189,5 +214,8 @@ void Launcher::UpdateHighlight() {
             lv_obj_set_style_bg_color(items_[i], lv_color_hex(kColorCard), 0);
             lv_obj_set_style_border_width(items_[i], 0, 0);
         }
+    }
+    if (selected_ >= 0 && selected_ < (int)items_.size()) {
+        lv_obj_scroll_to_view(items_[selected_], LV_ANIM_ON);
     }
 }

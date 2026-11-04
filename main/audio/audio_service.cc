@@ -129,6 +129,7 @@ void AudioService::Stop() {
     audio_decode_queue_.clear();
     audio_playback_queue_.clear();
     audio_testing_queue_.clear();
+    music_playback_active_ = false;
     audio_queue_cv_.notify_all();
 }
 
@@ -259,13 +260,21 @@ void AudioService::AudioInputTask() {
 void AudioService::AudioOutputTask() {
     while (true) {
         std::unique_lock<std::mutex> lock(audio_queue_mutex_);
-        audio_queue_cv_.wait(lock, [this]() { return !audio_playback_queue_.empty() || service_stopped_; });
+        audio_queue_cv_.wait(lock, [this]() {
+            return service_stopped_ || (!audio_playback_queue_.empty() &&
+                (!music_playback_active_ || music_playback_ready_ ||
+                 audio_playback_queue_.size() >= MUSIC_STARTUP_BUFFER_TASKS));
+        });
         if (service_stopped_) {
             break;
+        }
+        if (music_playback_active_ && !music_playback_ready_) {
+            music_playback_ready_ = true;
         }
 
         auto task = std::move(audio_playback_queue_.front());
         audio_playback_queue_.pop_front();
+        audio_output_in_progress_ = true;
         audio_queue_cv_.notify_all();
         lock.unlock();
 
@@ -276,14 +285,26 @@ void AudioService::AudioOutputTask() {
         }
         codec_->OutputData(task->pcm);
 
+        lock.lock();
+        audio_output_in_progress_ = false;
+        audio_queue_cv_.notify_all();
+
         /* Update the last output time */
         last_output_time_ = std::chrono::steady_clock::now();
         debug_statistics_.playback_count++;
 
+        if (music_playback_active_ && audio_playback_queue_.empty()) {
+            audio_queue_cv_.wait_for(lock, std::chrono::milliseconds(MUSIC_REBUFFER_TIMEOUT_MS), [this]() {
+                return service_stopped_ || !music_playback_active_ || !audio_playback_queue_.empty();
+            });
+            if (music_playback_active_ && audio_playback_queue_.empty()) {
+                music_playback_ready_ = false;
+            }
+        }
+
 #if CONFIG_USE_SERVER_AEC
         /* Record the timestamp for server AEC */
         if (task->timestamp > 0) {
-            lock.lock();
             timestamp_queue_.push_back(task->timestamp);
         }
 #endif
@@ -298,14 +319,16 @@ void AudioService::OpusCodecTask() {
         audio_queue_cv_.wait(lock, [this]() {
             return service_stopped_ ||
                 (!audio_encode_queue_.empty() && audio_send_queue_.size() < MAX_SEND_PACKETS_IN_QUEUE) ||
-                (!audio_decode_queue_.empty() && audio_playback_queue_.size() < MAX_PLAYBACK_TASKS_IN_QUEUE);
+                (!music_playback_active_ && !audio_decode_queue_.empty() &&
+                    audio_playback_queue_.size() < MAX_PLAYBACK_TASKS_IN_QUEUE);
         });
         if (service_stopped_) {
             break;
         }
 
         /* Decode the audio from decode queue */
-        if (!audio_decode_queue_.empty() && audio_playback_queue_.size() < MAX_PLAYBACK_TASKS_IN_QUEUE) {
+        if (!music_playback_active_ && !audio_decode_queue_.empty() &&
+            audio_playback_queue_.size() < MAX_PLAYBACK_TASKS_IN_QUEUE) {
             auto packet = std::move(audio_decode_queue_.front());
             audio_decode_queue_.pop_front();
             audio_queue_cv_.notify_all();
@@ -326,7 +349,9 @@ void AudioService::OpusCodecTask() {
                 }
 
                 lock.lock();
-                audio_playback_queue_.push_back(std::move(task));
+                if (!music_playback_active_) {
+                    audio_playback_queue_.push_back(std::move(task));
+                }
                 audio_queue_cv_.notify_all();
             } else {
                 ESP_LOGE(TAG, "Failed to decode audio");
@@ -411,12 +436,21 @@ void AudioService::PushTaskToEncodeQueue(AudioTaskType type, std::vector<int16_t
 
 bool AudioService::PushPacketToDecodeQueue(std::unique_ptr<AudioStreamPacket> packet, bool wait) {
     std::unique_lock<std::mutex> lock(audio_queue_mutex_);
+    if (music_playback_active_ || service_stopped_) {
+        return false;
+    }
     if (audio_decode_queue_.size() >= MAX_DECODE_PACKETS_IN_QUEUE) {
         if (wait) {
-            audio_queue_cv_.wait(lock, [this]() { return audio_decode_queue_.size() < MAX_DECODE_PACKETS_IN_QUEUE; });
+            audio_queue_cv_.wait(lock, [this]() {
+                return music_playback_active_ || service_stopped_ ||
+                    audio_decode_queue_.size() < MAX_DECODE_PACKETS_IN_QUEUE;
+            });
         } else {
             return false;
         }
+    }
+    if (music_playback_active_ || service_stopped_) {
+        return false;
     }
     audio_decode_queue_.push_back(std::move(packet));
     audio_queue_cv_.notify_all();
@@ -501,7 +535,11 @@ void AudioService::EnableAudioTesting(bool enable) {
         xEventGroupClearBits(event_group_, AS_EVENT_AUDIO_TESTING_RUNNING);
         /* Copy audio_testing_queue_ to audio_decode_queue_ */
         std::lock_guard<std::mutex> lock(audio_queue_mutex_);
-        audio_decode_queue_ = std::move(audio_testing_queue_);
+        if (!music_playback_active_) {
+            audio_decode_queue_ = std::move(audio_testing_queue_);
+        } else {
+            audio_testing_queue_.clear();
+        }
         audio_queue_cv_.notify_all();
     }
 }
@@ -521,6 +559,9 @@ void AudioService::SetCallbacks(AudioServiceCallbacks& callbacks) {
 }
 
 void AudioService::PlaySound(const std::string_view& ogg) {
+    if (IsMusicPlaybackActive()) {
+        return;
+    }
     if (!codec_->output_enabled()) {
         esp_timer_stop(audio_power_timer_);
         esp_timer_start_periodic(audio_power_timer_, AUDIO_POWER_CHECK_INTERVAL_MS * 1000);
@@ -619,9 +660,61 @@ void AudioService::PlaySound(const std::string_view& ogg) {
     }
 }
 
+void AudioService::StartMusicPlayback() {
+    std::unique_lock<std::mutex> lock(audio_queue_mutex_);
+    music_playback_active_ = true;
+    music_playback_ready_ = false;
+    audio_decode_queue_.clear();
+    audio_playback_queue_.clear();
+    audio_testing_queue_.clear();
+    timestamp_queue_.clear();
+    audio_queue_cv_.notify_all();
+    audio_queue_cv_.wait(lock, [this]() { return !audio_output_in_progress_ || service_stopped_; });
+    if (service_stopped_) {
+        music_playback_active_ = false;
+    }
+}
+
+void AudioService::StopMusicPlayback(bool drain_queued_audio) {
+    std::lock_guard<std::mutex> lock(audio_queue_mutex_);
+    music_playback_active_ = false;
+    music_playback_ready_ = false;
+    if (!drain_queued_audio) {
+        audio_playback_queue_.clear();
+    }
+    audio_queue_cv_.notify_all();
+}
+
+bool AudioService::PushMusicPcm(std::vector<int16_t>&& pcm) {
+    if (pcm.empty()) {
+        return true;
+    }
+    auto task = std::make_unique<AudioTask>();
+    task->type = kAudioTaskTypeDecodeToPlaybackQueue;
+    task->pcm = std::move(pcm);
+
+    std::unique_lock<std::mutex> lock(audio_queue_mutex_);
+    audio_queue_cv_.wait(lock, [this]() {
+        return !music_playback_active_ || service_stopped_ ||
+            audio_playback_queue_.size() < MAX_MUSIC_PCM_TASKS_IN_QUEUE;
+    });
+    if (!music_playback_active_ || service_stopped_) {
+        return false;
+    }
+    audio_playback_queue_.push_back(std::move(task));
+    audio_queue_cv_.notify_all();
+    return true;
+}
+
+bool AudioService::IsMusicPlaybackActive() {
+    std::lock_guard<std::mutex> lock(audio_queue_mutex_);
+    return music_playback_active_;
+}
+
 bool AudioService::IsIdle() {
     std::lock_guard<std::mutex> lock(audio_queue_mutex_);
-    return audio_encode_queue_.empty() && audio_decode_queue_.empty() && audio_playback_queue_.empty() && audio_testing_queue_.empty();
+    return !music_playback_active_ && audio_encode_queue_.empty() && audio_decode_queue_.empty() &&
+        audio_playback_queue_.empty() && audio_testing_queue_.empty();
 }
 
 void AudioService::ResetDecoder() {
@@ -629,7 +722,9 @@ void AudioService::ResetDecoder() {
     opus_decoder_->ResetState();
     timestamp_queue_.clear();
     audio_decode_queue_.clear();
-    audio_playback_queue_.clear();
+    if (!music_playback_active_) {
+        audio_playback_queue_.clear();
+    }
     audio_testing_queue_.clear();
     audio_queue_cv_.notify_all();
 }

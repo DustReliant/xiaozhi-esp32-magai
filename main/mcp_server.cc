@@ -13,6 +13,8 @@
 #include "application.h"
 #include "app/app_manager.h"
 #include "weather_clock/weather_clock.h"
+#include "music/music_app.h"
+#include "bili_fans/bili_fans.h"
 #include "display.h"
 #include "oled_display.h"
 #include "board.h"
@@ -125,8 +127,8 @@ void McpServer::AddCommonTools() {
 
     // magai App 体系语音控制工具
     AddTool("self.app.launch",
-        "Launch an app on the device. Available apps: `weather-clock` (天气时钟), `2048` (2048 game), `music` (在线音乐). "
-        "Use `chat` to go back to the voice chat screen.",
+        "Launch an app on the device. Available apps: `weather-clock` (天气时钟), `2048` (2048 game), `music` (在线音乐), "
+        "`bili-fans` (B站粉丝面板), `heartbeat` (心跳动画). Use `chat` to go back to the voice chat screen.",
         PropertyList({
             Property("name", kPropertyTypeString)
         }),
@@ -134,14 +136,20 @@ void McpServer::AddCommonTools() {
             auto name = properties["name"].value<std::string>();
             auto& manager = AppManager::GetInstance();
             if (name == "chat" || name == "聊天") {
-                manager.BackToChat();
+                // 本回调跑在 MQTT 事件任务,直接动 LVGL 会与渲染任务并发导致
+                // 界面叠加/花屏——必须投递到主循环(经 Schedule)串行执行
+                Application::GetInstance().Schedule([&manager]() {
+                    manager.BackToChat();
+                });
                 return true;
             }
             auto* app = manager.FindApp(name);
             if (app == nullptr) {
                 throw std::runtime_error("Unknown app: " + name);
             }
-            manager.SwitchTo(app);
+            Application::GetInstance().Schedule([&manager, app]() {
+                manager.SwitchTo(app);
+            });
             return true;
         });
 
@@ -159,6 +167,25 @@ void McpServer::AddCommonTools() {
             return root;
         });
 
+    AddTool("self.music.search_play",
+        "Search Netease or Kugou music and play the first supported MP3 result. Provide a song title or artist.",
+        PropertyList({
+            Property("query", kPropertyTypeString)
+        }),
+        [](const PropertyList& properties) -> ReturnValue {
+            auto query = properties["query"].value<std::string>();
+            if (query.empty()) {
+                throw std::runtime_error("music query is empty");
+            }
+            Application::GetInstance().Schedule([query]() {
+                auto& manager = AppManager::GetInstance();
+                auto& music = MusicApp::GetInstance();
+                manager.SwitchTo(&music);
+                music.SearchAndPlay(query);
+            });
+            return true;
+        });
+
     AddTool("self.weather.set_city",
         "Set the city for the weather-clock app. Use a Chinese city name like `上海` or `广州`. "
         "After being set manually, auto IP-location will no longer override it.",
@@ -172,6 +199,38 @@ void McpServer::AddCommonTools() {
             }
             WeatherClockApp::GetInstance().SetCity(city, true);
             return true;
+        });
+
+    // B站粉丝面板:换号 / 查询
+    AddTool("self.bili.set_uid",
+        "Set the Bilibili UID for the bili-fans app (digits only, e.g. 388994555). "
+        "Takes effect immediately.",
+        PropertyList({
+            Property("uid", kPropertyTypeString)
+        }),
+        [](const PropertyList& properties) -> ReturnValue {
+            auto uid = properties["uid"].value<std::string>();
+            if (uid.empty()) {
+                throw std::runtime_error("uid is empty");
+            }
+            BiliFansApp::GetInstance().SetUid(uid);
+            return true;
+        });
+
+    AddTool("self.bili.get_fans",
+        "Get the current Bilibili stats of the tracked user: fans count, following count, "
+        "video count and nickname. Use this to answer questions like `我现在有多少粉丝`.",
+        PropertyList(),
+        [](const PropertyList& properties) -> ReturnValue {
+            int fans = 0, following = 0, videos = 0;
+            std::string name;
+            BiliFansApp::GetInstance().GetStats(fans, following, videos, name);
+            cJSON* root = cJSON_CreateObject();
+            cJSON_AddNumberToObject(root, "fans", fans);
+            cJSON_AddNumberToObject(root, "following", following);
+            cJSON_AddNumberToObject(root, "videos", videos);
+            cJSON_AddStringToObject(root, "name", name.c_str());
+            return root;
         });
 
     // Restore the original tools list to the end of the tools list
