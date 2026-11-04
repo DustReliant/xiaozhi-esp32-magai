@@ -1,0 +1,126 @@
+<mxfile host="app.diagrams.net" agent="magai-ui-designer" version="24.7.7">
+  <diagram id="launcher" name="启动器 Launcher">
+    <mxGraphModel dx="800" dy="600" grid="1" gridSize="1" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="400" pageHeight="600" math="0" shadow="0">
+      <root>
+        <mxCell id="1" parent="0" />
+        <mxCell id="frame" value="启动器 Launcher 240x280" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1A1B25;strokeColor=#4A9DFF;fontColor=#E8EAF0;fontSize=13;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="40" y="40" width="240" height="280" as="geometry" />
+        </mxCell>
+        <mxCell id="title" value="应用&#10;font_puhui_16 #E8EAF0 居中" style="text;html=1;align=center;fontColor=#9AA0B4;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="40" y="48" width="240" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="nav" value="◀  返回聊天  ◀&#10;触摸热区 48x28" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#252836;strokeColor=none;fontColor=#9AA0B4;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="52" y="70" width="216" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="tile1" value="💬&#10;聊天助手&#10;磁贴 216x44" style="rounded=10;whiteSpace=wrap;html=1;fillColor=#252836;strokeColor=none;fontColor=#E8EAF0;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="52" y="106" width="216" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="tile2" value="🌤&#10;天气时钟 (选中态:边框 #4A9DFF 2px)" style="rounded=10;whiteSpace=wrap;html=1;fillColor=#2D3550;strokeColor=#4A9DFF;strokeWidth=2;fontColor=#E8EAF0;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="52" y="158" width="216" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="tile3" value="🎮&#10;2048" style="rounded=10;whiteSpace=wrap;html=1;fillColor=#252836;strokeColor=none;fontColor=#E8EAF0;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="52" y="210" width="216" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="tile4" value="🎵&#10;在线音乐" style="rounded=10;whiteSpace=wrap;html=1;fillColor=#252836;strokeColor=none;fontColor=#E8EAF0;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="52" y="262" width="216" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="hint" value="触摸点击进入 · 音量键选择 · 触摸键确认" style="text;html=1;align=center;fontColor=#9AA0B4;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="40" y="322" width="240" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="note" value="规范:页面边距12px,磁贴间距8px,磁贴216x44(=240-12*2),&#10;选中态用主强调色边框+亮背景,图标区40px居左文字居中偏左" style="text;html=1;align=left;fontColor=#FFB74D;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="300" y="60" width="220" height="60" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="weather" name="天气时钟 WeatherClock">
+    <mxGraphModel dx="800" dy="600" grid="1" gridSize="1" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="400" pageHeight="600" math="0" shadow="0">
+      <root>
+        <mxCell id="1" parent="0" />
+        <mxCell id="frame" value="天气时钟 240x280" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1A1B25;strokeColor=#4A9DFF;fontColor=#E8EAF0;fontSize=13;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="40" y="40" width="240" height="280" as="geometry" />
+        </mxCell>
+        <mxCell id="clock" value="14:32&#10;Montserrat 48 白色,区域 (12,36)-(228,96)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;fontColor=#E8EAF0;fontSize=28;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="52" y="56" width="216" height="52" as="geometry" />
+        </mxCell>
+        <mxCell id="date" value="2026-11-02 周一 · 北京市&#10;font_puhui_16 #9AA0B4,居中,(12,100)-(228,120)" style="text;html=1;align=center;fontColor=#9AA0B4;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="52" y="112" width="216" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="card" value="" style="rounded=12;whiteSpace=wrap;html=1;fillColor=#252836;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="52" y="144" width="216" height="108" as="geometry" />
+        </mxCell>
+        <mxCell id="icon" value="☀&#10;天气图标 48px 居中 (90,156)-(150,204)" style="text;html=1;align=center;fontColor=#FFB74D;fontSize=32;" vertex="1" parent="1">
+          <mxGeometry x="80" y="152" width="80" height="52" as="geometry" />
+        </mxCell>
+        <mxCell id="temp" value="18°C&#10;Montserrat 32 (140,156)-(256,196)" style="text;html=1;align=center;fontColor=#E8EAF0;fontSize=24;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="160" y="156" width="96" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="detail" value="晴 · 湿度 45% · 东北风2级&#10;font_puhui_16 #E8EAF0,卡片内底部居中" style="text;html=1;align=center;fontColor=#E8EAF0;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="52" y="214" width="216" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="hint" value="长按触摸键退出 · 语音可切换城市" style="text;html=1;align=center;fontColor=#9AA0B4;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="40" y="322" width="240" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="note" value="布局:时钟区上 1/3,天气卡片下 2/3;&#10;数字时钟用 Montserrat48(等宽感),日期城市一行&#10;天气卡片:左图标右温度,底部详情行&#10;城市自动 IP 定位,语音设置后显示手动城市" style="text;html=1;align=left;fontColor=#FFB74D;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="300" y="60" width="220" height="80" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="game2048" name="2048">
+    <mxGraphModel dx="800" dy="600" grid="1" gridSize="1" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="400" pageHeight="600" math="0" shadow="0">
+      <root>
+        <mxCell id="1" parent="0" />
+        <mxCell id="frame" value="2048 240x280" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1A1B25;strokeColor=#4A9DFF;fontColor=#E8EAF0;fontSize=13;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="40" y="40" width="240" height="280" as="geometry" />
+        </mxCell>
+        <mxCell id="score" value="分数 1234" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#252836;strokeColor=none;fontColor=#E8EAF0;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="52" y="50" width="104" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="best" value="最佳 5678" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#252836;strokeColor=none;fontColor=#9AA0B4;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="164" y="50" width="104" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="board" value="" style="rounded=12;whiteSpace=wrap;html=1;fillColor=#252836;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="24" y="92" width="232" height="168" as="geometry" />
+        </mxCell>
+        <mxCell id="grid" value="4x4 网格:格 52x52,间隙 6,边距 4&#10;数字 2/4 深底浅字,8+ 浅底深字,1024+ 金色系&#10;棋盘总高 4*52+3*6+8=238? 调整为格 48 间隙 6:48*4+6*3+8=218" style="text;html=1;align=center;fontColor=#E8EAF0;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="24" y="92" width="232" height="168" as="geometry" />
+        </mxCell>
+        <mxCell id="hint" value="滑动屏幕移动 · 触摸键重开 · 长按退出" style="text;html=1;align=center;fontColor=#9AA0B4;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="40" y="322" width="240" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="note" value="触摸手势:上下左右滑 = 移动方向&#10;物理键:vol+短=上/vol+长=右/vol-短=下/vol-长=左&#10;游戏结束:半透明遮罩+「游戏结束」+「触摸重开」&#10;色板:2:#EEE4DA 4:#EDE0C8 8:#F2B179 16:#F59563&#10;32:#F67C5F 64:#F65E3B 128+:#EDCF72..#EDC22E(金字)" style="text;html=1;align=left;fontColor=#FFB74D;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="300" y="50" width="230" height="100" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="music" name="在线音乐 Music">
+    <mxGraphModel dx="800" dy="600" grid="1" gridSize="1" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="400" pageHeight="600" math="0" shadow="0">
+      <root>
+        <mxCell id="1" parent="0" />
+        <mxCell id="frame" value="在线音乐 240x280" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1A1B25;strokeColor=#4A9DFF;fontColor=#E8EAF0;fontSize=13;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="40" y="40" width="240" height="280" as="geometry" />
+        </mxCell>
+        <mxCell id="cd" value="🎵&#10;旋转唱片区 96x96 圆形 (72,52)-(168,148)&#10;播放时旋转动画,暂停时停转" style="ellipse;whiteSpace=wrap;html=1;fillColor=#252836;strokeColor=#4A9DFF;fontColor=#4A9DFF;fontSize=36;" vertex="1" parent="1">
+          <mxGeometry x="112" y="72" width="96" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="station" value="央广新闻&#10;font_puhui_16 18px #E8EAF0 居中 (12,160)-(228,184)" style="text;html=1;align=center;fontColor=#E8EAF0;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="52" y="176" width="216" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="status" value="● 播放中&#10;#4A9DFF 12px 居中" style="text;html=1;align=center;fontColor=#4A9DFF;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="52" y="204" width="216" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="ctrl" value="⏮   ⏸/▶   ⏭&#10;控制条:三个 56x44 按钮,圆角 8,间距 20,居中 (12,232)-(228,276)" style="rounded=8;whiteSpace=wrap;html=1;fillColor=#252836;strokeColor=none;fontColor=#E8EAF0;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="76" y="236" width="168" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="hint" value="触摸控制条操作 · 音量键切台 · 长按触摸键退出" style="text;html=1;align=center;fontColor=#9AA0B4;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="40" y="322" width="240" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="note" value="布局:上 1/3 唱片可视化,中间台名状态,下控制条&#10;唱片旋转用 lv_img rotate 动画(或 arc 旋转)&#10;切台时唱片短暂缩放反馈;缓冲中显示「连接中…」&#10;台名过长跑马灯" style="text;html=1;align=left;fontColor=#FFB74D;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="300" y="60" width="220" height="80" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
