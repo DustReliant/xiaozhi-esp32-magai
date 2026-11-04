@@ -37,7 +37,18 @@ set(SOURCES "audio/audio_codec.cc"
             "main.cc"
             )
 
-set(INCLUDE_DIRS "." "display" "display/lvgl_display" "display/lvgl_display/jpg" "audio" "protocols")
+set(INCLUDE_DIRS "." "display" "display/lvgl_display" "display/lvgl_display/jpg" "audio" "protocols" "app")
+
+# magai App framework sources
+list(APPEND SOURCES
+            "app/app_manager.cc"
+            "app/launcher/launcher.cc"
+            "app/sntp_time.cc"
+            "app/ip_locator.cc"
+            "app/weather_clock/weather_clock.cc"
+            "app/game2048/game2048.cc"
+            "app/music/music_app.cc"
+)
 
 # Add board common files
 file(GLOB BOARD_COMMON_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/boards/common/*.cc)
@@ -530,6 +541,16 @@ elseif(CONFIG_BOARD_TYPE_AIPI_LITE)
     set(BOARD_TYPE "aipi-lite")
     set(BUILTIN_TEXT_FONT font_puhui_basic_14_1)
     set(BUILTIN_ICON_FONT font_awesome_14_1)
+    set(DEFAULT_EMOJI_COLLECTION twemoji_32)
+elseif(CONFIG_BOARD_TYPE_MAGAI_WIFI)
+    set(BOARD_TYPE "magai-wifi")
+    set(BUILTIN_TEXT_FONT font_puhui_16_4)
+    set(BUILTIN_ICON_FONT font_awesome_16_4)
+    set(DEFAULT_EMOJI_COLLECTION twemoji_32)
+elseif(CONFIG_BOARD_TYPE_MAGAI_ML307)
+    set(BOARD_TYPE "magai-ml307")
+    set(BUILTIN_TEXT_FONT font_puhui_16_4)
+    set(BUILTIN_ICON_FONT font_awesome_16_4)
     set(DEFAULT_EMOJI_COLLECTION twemoji_32)
 endif()
 
