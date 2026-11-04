@@ -153,29 +153,45 @@ bool MqttProtocol::SendText(const std::string& text) {
 }
 
 bool MqttProtocol::SendAudio(std::unique_ptr<AudioStreamPacket> packet) {
-    std::lock_guard<std::mutex> lock(channel_mutex_);
-    if (udp_ == nullptr) {
-        return false;
-    }
-
-    std::string nonce(aes_nonce_);
-    *(uint16_t*)&nonce[2] = htons(packet->payload.size());
-    *(uint32_t*)&nonce[8] = htonl(packet->timestamp);
-    *(uint32_t*)&nonce[12] = htonl(++local_sequence_);
-
+    constexpr size_t kAudioHeaderSize = 16;
+    std::shared_ptr<Udp> udp;
     std::string encrypted;
-    encrypted.resize(aes_nonce_.size() + packet->payload.size());
-    memcpy(encrypted.data(), nonce.data(), nonce.size());
+    {
+        std::lock_guard<std::mutex> lock(channel_mutex_);
+        if (udp_ == nullptr) {
+            return false;
+        }
+        if (aes_nonce_.size() != kAudioHeaderSize || packet->payload.size() > UINT16_MAX) {
+            ESP_LOGE(TAG, "Invalid AES nonce or audio payload length: %zu", packet->payload.size());
+            return false;
+        }
 
-    size_t nc_off = 0;
-    uint8_t stream_block[16] = {0};
-    if (mbedtls_aes_crypt_ctr(&aes_ctx_, packet->payload.size(), &nc_off, (uint8_t*)nonce.c_str(), stream_block,
-        (uint8_t*)packet->payload.data(), (uint8_t*)&encrypted[nonce.size()]) != 0) {
-        ESP_LOGE(TAG, "Failed to encrypt audio data");
-        return false;
+        udp = udp_;
+        std::string nonce(aes_nonce_);
+        const uint16_t payload_len = htons(static_cast<uint16_t>(packet->payload.size()));
+        const uint32_t timestamp = htonl(packet->timestamp);
+        const uint32_t sequence = htonl(++local_sequence_);
+        memcpy(nonce.data() + 2, &payload_len, sizeof(payload_len));
+        memcpy(nonce.data() + 8, &timestamp, sizeof(timestamp));
+        memcpy(nonce.data() + 12, &sequence, sizeof(sequence));
+
+        encrypted.resize(nonce.size() + packet->payload.size());
+        memcpy(encrypted.data(), nonce.data(), nonce.size());
+
+        size_t nc_off = 0;
+        uint8_t stream_block[16] = {0};
+        if (mbedtls_aes_crypt_ctr(&aes_ctx_, packet->payload.size(), &nc_off,
+                reinterpret_cast<uint8_t*>(nonce.data()), stream_block,
+                reinterpret_cast<const uint8_t*>(packet->payload.data()),
+                reinterpret_cast<uint8_t*>(encrypted.data() + nonce.size())) != 0) {
+            ESP_LOGE(TAG, "Failed to encrypt audio data");
+            return false;
+        }
     }
 
-    return udp_->Send(encrypted) > 0;
+    // Keep blocking modem I/O outside the channel lock. The shared reference
+    // keeps the transport alive if the channel is closed during the send.
+    return udp->Send(encrypted) > 0;
 }
 
 void MqttProtocol::CloseAudioChannel() {
@@ -368,5 +384,6 @@ std::string MqttProtocol::DecodeHexString(const std::string& hex_string) {
 }
 
 bool MqttProtocol::IsAudioChannelOpened() const {
+    std::lock_guard<std::mutex> lock(channel_mutex_);
     return udp_ != nullptr && !error_occurred_ && !IsTimeout();
 }
