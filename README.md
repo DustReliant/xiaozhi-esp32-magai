@@ -1,6 +1,10 @@
-# An MCP-based Chatbot
+# Magai 小智 AI 语音设备固件
 
 （中文 | [English](README_en.md) | [日本語](README_ja.md)）
+
+> 本仓库是 [78/xiaozhi-esp32](https://github.com/78/xiaozhi-esp32) 的 Magai 维护版 fork。上游项目仍是通用固件与硬件支持的来源；本仓库保留原项目的 MIT 许可和归属，并维护 Magai 板卡及本地 App 扩展。
+
+截至 2026-11，本分支基于小智 v2.0.4 / ESP-IDF 5.4.1；上游 `main` 已演进至 v2.5.3 / ESP-IDF 6.1。两者在构建系统、音频和应用层存在较大差异，更新上游时请先使用独立分支审查并验证两种 Magai 板卡，不要直接对 `main` 执行合并。
 
 ## 介绍
 
@@ -9,6 +13,14 @@
 👉 [手工打造你的 AI 女友，新手入门教程【bilibili】](https://www.bilibili.com/video/BV1XnmFYLEJN/)
 
 小智 AI 聊天机器人作为一个语音交互入口，利用 Qwen / DeepSeek 等大模型的 AI 能力，通过 MCP 协议实现多端控制。
+
+### Magai 扩展
+
+- Magai Wi-Fi 和 ML307 4G 板卡支持
+- 设备端 App 框架：天气时钟、2048、在线音乐、B 站粉丝面板和心跳动画
+- 语音 MCP 控制、城市设置及音乐搜索播放
+
+开发规范与 Agent 协作方式见 [AGENTS.md](AGENTS.md) 和 [Magai Agent 开发工作流](docs/agent-development-workflow.md)。当前缺陷处理顺序见[下一阶段工作计划](docs/plans/2026-11-05-next-work-plan.md)。
 
 <img src="docs/mcp-based-graph.jpg" alt="通过MCP控制万物" width="320">
 
@@ -126,6 +138,18 @@ v1 的稳定版本为 1.9.2，可以通过 `git checkout v1` 来切换到 v1 版
 - [MCP 协议交互流程](docs/mcp-protocol.md) - 设备端 MCP 协议的实现方式
 - [MQTT + UDP 混合通信协议文档](docs/mqtt-udp.md)
 - [一份详细的 WebSocket 通信协议文档](docs/websocket.md)
+
+### Fork 与上游同步
+
+本地 `origin` 指向 Magai 仓库，`upstream` 指向原始项目。若尚未配置上游，可添加后查看待同步提交：
+
+```bash
+git remote add upstream https://github.com/78/xiaozhi-esp32.git
+git fetch upstream
+git log --oneline --left-right main...upstream/main
+```
+
+同步前先检查上游的 ESP-IDF 版本、组件依赖和对 `main/CMakeLists.txt`、`main/application.cc`、`main/audio/` 的改动；在独立分支整合 Magai 板卡和 App，并完成 Wi-Fi 与 ML307 构建后再进入 `main`。
 
 ## 大模型配置
 

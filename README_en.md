@@ -1,6 +1,10 @@
-# An MCP-based Chatbot
+# Magai XiaoZhi ESP32 Firmware
 
 (English | [中文](README.md) | [日本語](README_ja.md))
+
+> This repository is the Magai-maintained fork of [78/xiaozhi-esp32](https://github.com/78/xiaozhi-esp32). The upstream project remains the source for common firmware and board support. This fork preserves its MIT license and attribution while maintaining Magai boards and local app extensions.
+
+As of November 2026, this branch is based on XiaoZhi v2.0.4 and ESP-IDF 5.4.1, while upstream `main` has moved to v2.5.3 and ESP-IDF 6.1. Their build, audio, and application layers have diverged substantially. Review upstream changes on a separate branch and validate both Magai board variants before merging; do not merge upstream directly into `main`.
 
 ## Introduction
 
@@ -9,6 +13,14 @@
 👉 [Handcraft your AI girlfriend, beginner's guide【bilibili】](https://www.bilibili.com/video/BV1XnmFYLEJN/)
 
 As a voice interaction entry, the XiaoZhi AI chatbot leverages the AI capabilities of large models like Qwen / DeepSeek, and achieves multi-terminal control via the MCP protocol.
+
+### Magai additions
+
+- Magai Wi-Fi and ML307 4G board support
+- On-device apps for weather and clock, 2048, online music, Bilibili fan stats, and a heartbeat animation
+- Voice-controlled app and music actions through MCP
+
+See [AGENTS.md](AGENTS.md), the [Magai agent development workflow](docs/agent-development-workflow.md), and the [next work plan](docs/plans/2026-11-05-next-work-plan.md).
 
 <img src="docs/mcp-based-graph.jpg" alt="Control everything via MCP" width="320">
 

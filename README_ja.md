@@ -1,6 +1,10 @@
-# MCP ベースのチャットボット
+# Magai 小智 ESP32 ファームウェア
 
 （日本語 | [中文](README.md) | [English](README_en.md)）
+
+> このリポジトリは [78/xiaozhi-esp32](https://github.com/78/xiaozhi-esp32) から派生した、Magai が保守する fork です。共通ファームウェアとボード対応の基盤は上流プロジェクトにあり、本リポジトリでは MIT ライセンスと著作権表示を維持しながら、Magai ボードと独自 App を保守します。
+
+2026年11月時点で、本ブランチは小智 v2.0.4 / ESP-IDF 5.4.1 がベースです。上流の `main` は v2.5.3 / ESP-IDF 6.1 に進み、ビルド、音声、アプリケーション層に大きな差があります。上流を取り込む際は別ブランチで確認し、Magai の両ボードを検証してください。`main` へ直接マージしないでください。
 
 ## はじめに
 
@@ -9,6 +13,14 @@
 👉 [手作りでAIガールフレンドを作る、初心者入門チュートリアル【bilibili】](https://www.bilibili.com/video/BV1XnmFYLEJN/)
 
 シャオジーAIチャットボットは音声インタラクションの入口として、Qwen / DeepSeekなどの大規模モデルのAI能力を活用し、MCPプロトコルを通じてマルチエンド制御を実現します。
+
+### Magai 独自の拡張
+
+- Magai Wi-Fi / ML307 4G ボードへの対応
+- 天気時計、2048、オンライン音楽、Bilibili ファン情報、心拍アニメーションのデバイス内 App
+- MCP による音声操作
+
+[AGENTS.md](AGENTS.md)、[Magai Agent 開発ワークフロー](docs/agent-development-workflow.md)、[次の作業計画](docs/plans/2026-11-05-next-work-plan.md)を参照してください。
 
 <img src="docs/mcp-based-graph.jpg" alt="MCPであらゆるものを制御" width="320">
 
