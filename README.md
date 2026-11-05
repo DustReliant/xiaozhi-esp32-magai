@@ -6,6 +6,14 @@
 
 截至 2026-11，本分支基于小智 v2.0.4 / ESP-IDF 5.4.1；上游 `main` 已演进至 v2.5.3 / ESP-IDF 6.1。两者在构建系统、音频和应用层存在较大差异，更新上游时请先使用独立分支审查并验证两种 Magai 板卡，不要直接对 `main` 执行合并。
 
+### 分支约定
+
+- `main`：与上游 `78/xiaozhi-esp32/main` 对齐，仅用于跟踪上游。
+- `master`：Magai 稳定基线和可发布代码。
+- `dev`：Magai 日常开发分支；功能验证通过后合并到 `master`。
+
+开发从 `dev` 创建功能分支并提交 Pull Request；不要在 `main` 上开发 Magai 功能。上游同步到 `main` 后，从 `main` 到 `dev` 做选择性迁移和适配，经双板构建及设备验收后再合并到 `master`。
+
 ## 介绍
 
 👉 [人类：给 AI 装摄像头 vs AI：当场发现主人三天没洗头【bilibili】](https://www.bilibili.com/video/BV1bpjgzKEhd/)

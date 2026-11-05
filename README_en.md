@@ -6,6 +6,14 @@
 
 As of November 2026, this branch is based on XiaoZhi v2.0.4 and ESP-IDF 5.4.1, while upstream `main` has moved to v2.5.3 and ESP-IDF 6.1. Their build, audio, and application layers have diverged substantially. Review upstream changes on a separate branch and validate both Magai board variants before merging; do not merge upstream directly into `main`.
 
+### Branch policy
+
+- `main` tracks `78/xiaozhi-esp32/main` and is reserved for upstream synchronization.
+- `master` is the stable Magai release baseline.
+- `dev` is the active Magai development branch. Merge validated work from `dev` into `master`.
+
+Create feature branches from `dev` and use pull requests. Do not develop Magai features on `main`. After syncing upstream into `main`, selectively port and adapt changes to `dev`, validate both Magai boards, and merge stable work into `master`.
+
 ## Introduction
 
 👉 [Human: Give AI a camera vs AI: Instantly finds out the owner hasn't washed hair for three days【bilibili】](https://www.bilibili.com/video/BV1bpjgzKEhd/)

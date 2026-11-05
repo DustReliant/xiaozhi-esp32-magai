@@ -4,6 +4,13 @@ This repository is the Magai-maintained fork of `78/xiaozhi-esp32`. Preserve ups
 
 Use [docs/agent-development-workflow.md](docs/agent-development-workflow.md) for agent roles, task flow, review, and validation. Keep multi-step plans under `docs/plans/`.
 
+## Branch Policy
+
+- `main` mirrors the upstream `78/xiaozhi-esp32` branch. Do not develop Magai features directly on it.
+- `dev` is the integration branch for Magai development. Create feature branches from `dev`.
+- `master` is the stable Magai release branch. Merge from `dev` only after review, both board builds, and applicable device acceptance.
+- Upstream changes flow into `main` first, then are selectively adapted to `dev`; do not merge the whole upstream history into Magai branches without an explicit migration plan.
+
 ## Engineering Constraints
 
 - Inspect `git status`, the current branch, and relevant app/board docs before editing. Preserve existing user changes and avoid overlapping file ownership when delegating work.

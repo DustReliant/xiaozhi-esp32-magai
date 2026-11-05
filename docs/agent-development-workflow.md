@@ -10,6 +10,14 @@
 
 One agent owns each shared file at a time. Parallel work is limited to modules with clear boundaries; the lead reviews every integrated change.
 
+## Branch Model
+
+- `main` mirrors upstream `78/xiaozhi-esp32/main`; keep Magai feature commits off this branch.
+- `master` holds the stable Magai baseline and release candidates.
+- `dev` is the Magai integration branch. Start feature branches from `dev`, then merge reviewed work back to `dev`.
+- Promote `dev` to `master` only after the relevant acceptance checklist passes and both `magai-wifi` and `magai-ml307` builds succeed.
+- Sync upstream into `main` first. Selectively port changes to `dev`; a major version or ESP-IDF migration needs its own plan and validation before promotion.
+
 ## Task Flow
 
 1. **Inspect**: read `git status`, branch/remotes, the relevant source, and its acceptance checklist. Treat existing local edits as user work.
